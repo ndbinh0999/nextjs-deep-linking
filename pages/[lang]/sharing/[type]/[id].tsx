@@ -1,6 +1,5 @@
 import Head from "next/head";
 import { getAppStoreUrl } from "../../../../helpers";
-import { NextResponse } from "next/server";
 
 export const convertPrefix: { [key: string]: string } = {
   trending: "trendings",
@@ -19,6 +18,7 @@ type Props = {
     image: string;
     title: string;
   };
+  redirectUrl: string;
 };
 
 export async function getServerSideProps(context) {
@@ -32,38 +32,33 @@ export async function getServerSideProps(context) {
 
   const { metadata } = await fetch(apiUrl).then((res) => res.json());
 
-  if (redirectUrl) {
-    try {
-      const isFirefox = userAgent.indexOf("FxiOS") !== -1;
-      const isChrome = userAgent.indexOf("CriOS") !== -1;
-      const isEdge = userAgent.indexOf("EdgiOS") !== -1;
-      const isOpera = userAgent.indexOf("OPT") !== -1;
-      const isSafari = !isFirefox && !isChrome && !isEdge && !isOpera;
-      const isFacebookMessenger =
-        /FBAN|FBAV|FBMD|FBSN|FBSS|FBCR|FBID|FBLC|FBOP|FBRV|FB_IAB|FBBV|FBDM|FBFV/i.test(
-          userAgent
-        );
+  try {
+    const isFirefox = userAgent.indexOf("FxiOS") !== -1;
+    const isChrome = userAgent.indexOf("CriOS") !== -1;
+    const isEdge = userAgent.indexOf("EdgiOS") !== -1;
+    const isOpera = userAgent.indexOf("OPT") !== -1;
+    const isSafari = !isFirefox && !isChrome && !isEdge && !isOpera;
+    const isFacebookMessenger =
+      /FBAN|FBAV|FBMD|FBSN|FBSS|FBCR|FBID|FBLC|FBOP|FBRV|FB_IAB|FBBV|FBDM|FBFV/i.test(
+        userAgent
+      );
 
-      if (
-        /huawei/i.test(userAgent) ||
-        /android/i.test(userAgent) ||
-        (/iPad|iPhone/.test(userAgent) && !isSafari) ||
-        isFacebookMessenger
-      ) {
-        redirectUrl = `hyab://youth/sharing/${prefix}/${encryptId}`;
-      }
-    } catch (error) {
-      console.error("Error during URL redirection:", error);
+    if (
+      /huawei/i.test(userAgent) ||
+      /android/i.test(userAgent) ||
+      (/iPad|iPhone/.test(userAgent) && !isSafari) ||
+      isFacebookMessenger
+    ) {
+      redirectUrl = `hyab://youth/sharing/${prefix}/${encryptId}`;
     }
-  } else {
-    alert(
-      "Sorry, unable to open on desktop. Please open this link on your mobile app."
-    );
+  } catch (error) {
+    console.error("Error during URL redirection:", error);
   }
 
   const propsData = {
     props: {
       metadata,
+      redirectUrl,
     },
   };
 
@@ -77,7 +72,7 @@ export async function getServerSideProps(context) {
   return propsData;
 }
 
-const DeepLinkPage = ({ metadata }: Props) => {
+const DeepLinkPage = ({ metadata, redirectUrl }: Props) => {
   return (
     <div>
       <Head>
@@ -90,7 +85,9 @@ const DeepLinkPage = ({ metadata }: Props) => {
           content="https://example.com/images/cool-page.jpg"
         />
       </Head>
-      {metadata.title}
+      {redirectUrl
+        ? metadata.title
+        : "Sorry, unable to open on desktop. Please open this link on your mobile app."}
     </div>
   );
 };
